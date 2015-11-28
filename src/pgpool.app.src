@@ -1,0 +1,17 @@
+{application, pgpool,
+    [
+        {description, "A PosgreSQL client that automatically uses connection pools and handles reconnections in case of errors."},
+        {vsn, "0.1.0"},
+        {registered, [
+            pgpool_sup
+        ]},
+        {applications, [
+            kernel,
+            stdlib,
+            poolboy,
+            epgsql
+        ]},
+        {mod, {pgpool_app, []}},
+        {env, []}
+    ]
+}.

@@ -1,0 +1,32 @@
+# vim
+.*.sw[a-z]
+*.un~
+Session.vim
+
+# intellij
+.idea
+*.iml
+
+# OSX ignores
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+._*
+.Spotlight-V100
+.Trashes
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# project ignores
+deps
+ebin
+*.log
+/log
+erl_crash.dump
+*.beam
+.rebar

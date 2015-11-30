@@ -143,7 +143,7 @@ handle_info(Info, State) ->
 %% Terminate
 %% ----------------------------------------------------------------------------------------------------------
 -spec terminate(Reason :: any(), #state{}) -> terminated.
-terminate(Reason, #state{conn = Conn}) ->
+terminate(_Reason, #state{conn = Conn}) ->
     %% terminate
     case Conn of
         undefined -> ok;

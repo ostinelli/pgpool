@@ -46,11 +46,15 @@ children_spec([{DatabaseName, DatabaseInfo} | T], Specs) ->
     PoolArgs = [
         {name, {local, DatabaseName}},
         {worker_module, pgpool_worker}
-    ] ++ PoolArgs0,
+    ] ++ remove_list_elements([name, worker_module], PoolArgs0),
 
     ConnectionArgs = [
-        {database_name = DatabaseName}
-    ] ++ ConnectionArgs0,
+        {database_name, DatabaseName}
+    ] ++ remove_list_elements([database_name], ConnectionArgs0),
 
     Spec = poolboy:child_spec(DatabaseName, PoolArgs, ConnectionArgs),
     children_spec(T, [Spec | Specs]).
+
+remove_list_elements([], L) -> L;
+remove_list_elements([El|T], L) ->
+    remove_list_elements(T, lists:keydelete(El, 1, L)).

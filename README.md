@@ -111,6 +111,27 @@ Types:
   Params = list()
 ```
 
+##### Transaction
+
+```erlang
+pgpool:transaction(DatabaseName, Fun) -> (see epgsql for reply/error types)
+
+Types:
+  DatabaseName = atom()
+  Fun = fun()
+```
+
+For example:
+
+```erlang
+pgpool:transaction(db1_name,
+                   fun(C) ->
+                           pgpool:squery(C, "DELETE FROM users WHERE foo = true"),
+                           pgpool:squery(C, "UPDATE users SET bar = 100"),
+                           pgpool:squery(C, "SELECT * FROM users")
+                   end).
+```
+
 ## Contributing
 So you want to contribute? That's great! Please follow the guidelines below. It will make it easier to get merged in.
 

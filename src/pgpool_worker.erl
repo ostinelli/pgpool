@@ -131,7 +131,7 @@ handle_info(connect, State) ->
     {noreply, State1};
 
 handle_info({'EXIT', _From, _Reason}, State) ->
-    %% epgsql process died, start a timer to reconnect
+    error_logger:error_msg("epgsql process died, start a timer to reconnect"),
     State1 = timeout(State),
     {noreply, State1};
 

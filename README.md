@@ -87,11 +87,12 @@ Please refer to [epgsql README](https://github.com/epgsql/epgsql) for how to per
 ##### Simple Query
 
 ```erlang
-pgpool:squery(DatabaseName, Sql) -> (see epgsql for reply/error types)
+pgpool:squery(DatabaseName, Sql) -> Result
 
 Types:
   DatabaseName = atom()
   Sql = string() | iodata()
+  Result = (see epgsql for reply/error types)
 ```
 
 For example:
@@ -103,12 +104,19 @@ pgpool:squery(db1_name, "SELECT * FROM users;").
 ##### Extended Query
 
 ```erlang
-pgpool:equery(DatabaseName, Statement, Params) -> (see epgsql for reply/error types)
+pgpool:equery(DatabaseName, Statement, Params) -> Result
 
 Types:
   DatabaseName = atom()
   Statement = string()
   Params = list()
+  Result = (see epgsql for reply/error types)
+```
+
+For example:
+
+```erlang
+pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3]).
 ```
 
 ## Contributing

@@ -34,13 +34,13 @@ start_link(Args) ->
 -spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) -> any() | {error, no_connection}.
 squery(DatabaseName, Sql) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {squery, Sql})
+        gen_server:call(Worker, {squery, Sql}, infinity)
     end).
 
 -spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) -> any() | {error, no_connection}.
 equery(DatabaseName, Statement, Params) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {equery, Statement, Params})
+        gen_server:call(Worker, {equery, Statement, Params}, infinity)
     end).
 
 %% ===================================================================

@@ -4,7 +4,7 @@
 
 %% API
 -export([start_link/1]).
--export([squery/2, equery/3]).
+-export([squery/2, equery/3, transaction/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -41,6 +41,12 @@ squery(DatabaseName, Sql) ->
 equery(DatabaseName, Statement, Params) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
         gen_server:call(Worker, {equery, Statement, Params}, infinity)
+    end).
+
+-spec transaction(DatabaseName :: atom(), Fun :: fun()) -> any() | {error, no_connection}.
+transaction(DatabaseName, Fun) ->
+    poolboy:transaction(DatabaseName, fun(Worker) ->
+        gen_server:call(Worker, {transaction, Fun})
     end).
 
 %% ===================================================================
@@ -101,6 +107,9 @@ handle_call({squery, Sql}, _From, #state{conn = Conn} = State) ->
 
 handle_call({equery, Statement, Params}, _From, #state{conn = Conn} = State) ->
     {reply, epgsql:equery(Conn, Statement, Params), State};
+
+handle_call({transaction, Fun}, _From, #state{conn = Conn} = State) ->
+    {reply, epgsql:with_transaction(Conn, Fun), State};
 
 handle_call(Request, From, State) ->
     error_logger:warning_msg("Received from ~p an unknown call message: ~p", [Request, From]),

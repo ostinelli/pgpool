@@ -92,7 +92,7 @@ pgpool:squery(DatabaseName, Sql) -> Result
 Types:
   DatabaseName = atom()
   Sql = string() | iodata()
-  Result = (see epgsql for reply/error types)
+  Result = (see epgsql for reply/error types) | {error, no_connection}
 ```
 
 For example:
@@ -110,7 +110,7 @@ Types:
   DatabaseName = atom()
   Statement = string()
   Params = list()
-  Result = (see epgsql for reply/error types)
+  Result = (see epgsql for reply/error types) | {error, no_connection}
 ```
 
 For example:
@@ -118,6 +118,54 @@ For example:
 ```erlang
 pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3]).
 ```
+
+##### Simple Query  with retries
+In case there's no available connection to the database, the standard `squery/2` function will return `{error, no_connection}`. If you want to keep retrying until a connection is available, you can use `squery_retry/3`.
+
+Note however that this is a blocking call, and should be used only if needed.
+
+```erlang
+pgpool:squery_retry(DatabaseName, Sql, RetryTimeout) -> Result
+
+Types:
+  DatabaseName = atom()
+  Sql = string() | iodata()
+  RetryTimeout = non_neg_integer() | infinity
+  Result = (see epgsql for reply/error types) | {error, no_connection}
+```
+
+`RetryTimeout` specifies how much time (in milliseconds) will be spent waiting to retry (that is, excluding the time taken to call the database). Set to `infinity` if you want the call to block forever until a connection becomes available.
+
+For example:
+
+```erlang
+pgpool:squery_retry(db1_name, "SELECT * FROM users;", 60000).
+```
+
+##### Extended Query with retries
+In case there's no available connection to the database, the standard `equery/3` function will return `{error, no_connection}`. If you want to keep retrying until a connection is available, you can use `equery_retry/4`.
+
+Note however that this is a blocking call, and should be used only if needed.
+
+```erlang
+pgpool:equery(DatabaseName, Statement, Params, RetryTimeout) -> Result
+
+Types:
+  DatabaseName = atom()
+  Statement = string()
+  Params = list()
+  RetryTimeout = non_neg_integer() | infinity
+  Result = (see epgsql for reply/error types) | {error, no_connection}
+```
+
+`RetryTimeout` specifies how much time (in milliseconds) will be spent waiting to retry (that is, excluding the time taken to call the database). Set to `infinity` if you want the call to block forever until a connection becomes available.
+
+For example:
+
+```erlang
+pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3], 60000).
+```
+
 
 ## Contributing
 So you want to contribute? That's great! Please follow the guidelines below. It will make it easier to get merged in.

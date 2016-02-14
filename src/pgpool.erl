@@ -3,6 +3,7 @@
 %% API
 -export([start/0, stop/0]).
 -export([squery/2, equery/3]).
+-export([squery_retry/3, equery_retry/4]).
 
 %% ===================================================================
 %% API
@@ -19,13 +20,25 @@ stop() ->
     ok = application:stop(epgsql),
     ok = application:stop(poolboy).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) -> any() | {error, no_connection}.
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) ->
+    any() | {error, no_connection}.
 squery(DatabaseName, Sql) ->
     pgpool_worker:squery(DatabaseName, Sql).
 
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) -> any() | {error, no_connection}.
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) ->
+    any() | {error, no_connection}.
 equery(DatabaseName, Statement, Params) ->
     pgpool_worker:equery(DatabaseName, Statement, Params).
+
+-spec equery_retry(DatabaseName :: atom(), Statement :: string(), Params :: list(), RetryTimeout :: non_neg_integer() | infinity) ->
+    any() | {error, no_connection}.
+equery_retry(DatabaseName, Statement, Params, RetryTimeout) ->
+    pgpool_worker:equery_retry(DatabaseName, Statement, Params, RetryTimeout).
+
+-spec squery_retry(DatabaseName :: atom(), Sql :: string() | iodata(), RetryTimeout :: non_neg_integer() | infinity) ->
+    any() | {error, no_connection}.
+squery_retry(DatabaseName, Sql, RetryTimeout) ->
+    pgpool_worker:squery_retry(DatabaseName, Sql, RetryTimeout).
 
 %% ===================================================================
 %% Internal

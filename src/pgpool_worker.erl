@@ -5,6 +5,7 @@
 %% API
 -export([start_link/1]).
 -export([squery/2, equery/3]).
+-export([squery_retry/3, equery_retry/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -22,6 +23,7 @@
 
 %% macros
 -define(RECONNECT_TIMEOUT_MS, 5000).
+-define(RETRY_SLEEP_MS, 1000).
 
 
 %% ===================================================================
@@ -31,16 +33,46 @@
 start_link(Args) ->
     gen_server:start_link(?MODULE, Args, []).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) -> any() | {error, no_connection}.
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) ->
+    any() | {error, no_connection}.
 squery(DatabaseName, Sql) ->
+    squery_retry(DatabaseName, Sql, 0).
+
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) ->
+    any() | {error, no_connection}.
+equery(DatabaseName, Statement, Params) ->
+    equery_retry(DatabaseName, Statement, Params, 0).
+
+-spec squery_retry(DatabaseName :: atom(), Sql :: string() | iodata(), RetryTimeout :: non_neg_integer() | infinity) ->
+    any() | {error, no_connection}.
+squery_retry(DatabaseName, Sql, RetryTimeout) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {squery, Sql}, infinity)
+        case gen_server:call(Worker, {squery, Sql}, infinity) of
+            {error, no_connection} when RetryTimeout =:= infinity ->
+                timer:sleep(?RETRY_SLEEP_MS),
+                squery_retry(DatabaseName, Sql, infinity);
+            {error, no_connection} when RetryTimeout > 0 ->
+                timer:sleep(?RETRY_SLEEP_MS),
+                squery_retry(DatabaseName, Sql, RetryTimeout - ?RETRY_SLEEP_MS);
+            Result ->
+                Result
+        end
     end).
 
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) -> any() | {error, no_connection}.
-equery(DatabaseName, Statement, Params) ->
+-spec equery_retry(DatabaseName :: atom(), Statement :: string(), Params :: list(), RetryTimeout :: non_neg_integer() | infinity) ->
+    any() | {error, no_connection}.
+equery_retry(DatabaseName, Statement, Params, RetryTimeout) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {equery, Statement, Params}, infinity)
+        case gen_server:call(Worker, {equery, Statement, Params}, infinity) of
+            {error, no_connection} when RetryTimeout =:= infinity ->
+                timer:sleep(?RETRY_SLEEP_MS),
+                equery_retry(DatabaseName, Statement, Params, infinity);
+            {error, no_connection} when RetryTimeout > 0 ->
+                timer:sleep(?RETRY_SLEEP_MS),
+                equery_retry(DatabaseName, Statement, Params, RetryTimeout - ?RETRY_SLEEP_MS);
+            Result ->
+                Result
+        end
     end).
 
 %% ===================================================================

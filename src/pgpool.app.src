@@ -1,6 +1,6 @@
 {application, pgpool,
     [
-        {description, "A PosgreSQL client that automatically uses connection pools and handles reconnections in case of errors."},
+        {description, "A PosgreSQL client that automatically uses connection pools and reconnects in case of errors."},
         {vsn, "0.9.0"},
         {registered, [
             pgpool_sup

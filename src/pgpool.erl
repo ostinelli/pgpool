@@ -27,8 +27,8 @@
 
 %% API
 -export([start/0, stop/0]).
--export([squery/2, equery/3]).
--export([squery_retry/3, equery_retry/4]).
+-export([squery/2, squery/3]).
+-export([equery/3, equery/4]).
 
 %% ===================================================================
 %% API
@@ -50,20 +50,20 @@ stop() ->
 squery(DatabaseName, Sql) ->
     pgpool_worker:squery(DatabaseName, Sql).
 
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), RetryTimeout :: non_neg_integer() | infinity) ->
+    any() | {error, no_connection}.
+squery(DatabaseName, Sql, RetryTimeout) ->
+    pgpool_worker:squery(DatabaseName, Sql, RetryTimeout).
+
 -spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) ->
     any() | {error, no_connection}.
 equery(DatabaseName, Statement, Params) ->
     pgpool_worker:equery(DatabaseName, Statement, Params).
 
--spec equery_retry(DatabaseName :: atom(), Statement :: string(), Params :: list(), RetryTimeout :: non_neg_integer() | infinity) ->
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), RetryTimeout :: non_neg_integer() | infinity) ->
     any() | {error, no_connection}.
-equery_retry(DatabaseName, Statement, Params, RetryTimeout) ->
-    pgpool_worker:equery_retry(DatabaseName, Statement, Params, RetryTimeout).
-
--spec squery_retry(DatabaseName :: atom(), Sql :: string() | iodata(), RetryTimeout :: non_neg_integer() | infinity) ->
-    any() | {error, no_connection}.
-squery_retry(DatabaseName, Sql, RetryTimeout) ->
-    pgpool_worker:squery_retry(DatabaseName, Sql, RetryTimeout).
+equery(DatabaseName, Statement, Params, RetryTimeout) ->
+    pgpool_worker:equery(DatabaseName, Statement, Params, RetryTimeout).
 
 %% ===================================================================
 %% Internal

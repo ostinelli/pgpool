@@ -9,6 +9,10 @@
             kernel,
             stdlib,
             poolboy,
+            asn1,
+            crypto,
+            public_key,
+            ssl,
             epgsql
         ]},
         {mod, {pgpool_app, []}},

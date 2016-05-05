@@ -36,14 +36,16 @@
 -spec start() -> ok.
 start() ->
     ok = ensure_started(poolboy),
+    ok = ensure_started(asn1),
+    ok = ensure_started(crypto),
+    ok = ensure_started(public_key),
+    ok = ensure_started(ssl),
     ok = ensure_started(epgsql),
     ok = ensure_started(pgpool).
 
 -spec stop() -> ok.
 stop() ->
-    ok = application:stop(pgpool),
-    ok = application:stop(epgsql),
-    ok = application:stop(poolboy).
+    ok = application:stop(pgpool).
 
 -spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) ->
     any() | {error, no_connection}.

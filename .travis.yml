@@ -13,6 +13,10 @@ otp_release:
   - R16B02
   - R16B01
 
+branches:
+  only:
+    - master
+
 addons:
   postgresql: "9.3"
 

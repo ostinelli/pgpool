@@ -274,7 +274,7 @@ timeout(#state{
     TimerRef = erlang:send_after(?RECONNECT_TIMEOUT_MS, self(), connect),
     State#state{timer_ref = TimerRef}.
 
-
+-spec prepare_or_get_statement(Statement :: string(), #state{}) -> {PreparedStatement :: any(), #state{}}.
 prepare_or_get_statement(Statement, #state{
     conn = Conn,
     prepared_statements = PreparedStatements

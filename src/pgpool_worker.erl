@@ -167,7 +167,8 @@ handle_call({squery, Sql}, _From, #state{conn = Conn} = State) ->
     {reply, epgsql:squery(Conn, Sql), State};
 
 handle_call({equery, Statement, Params}, _From, #state{conn = Conn} = State) ->
-    {reply, epgsql:equery(Conn, Statement, Params), State};
+    {_, State1} = prepare_or_get_statement(Statement, State),
+    {reply, epgsql:prepared_query(Conn, Statement, Params), State1};
 
 handle_call({batch, StatementsWithParams}, _From, #state{
     conn = Conn
@@ -284,7 +285,7 @@ prepare_or_get_statement(Statement, #state{
             {PreparedStatement, State};
         error ->
             %% prepare statement
-            {ok, PreparedStatement} = epgsql:parse(Conn, Statement),
+            {ok, PreparedStatement} = epgsql:parse(Conn, Statement, Statement, []),
             %% store
             PreparedStatements1 = dict:store(Statement, PreparedStatement, PreparedStatements),
             %% update state

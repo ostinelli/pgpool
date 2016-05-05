@@ -150,6 +150,8 @@ For example:
 pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3]).
 ```
 
+> Under the hood, PgPool will prepare your statements and cache them for you. If you use a lot of different statements, consider memory usage because the statements are not garbage collected.
+
 ##### Retries
 In case there's no available connection to the database, the standard `equery/3` function will return `{error, no_connection}`. If you want to keep retrying until a connection is available, you can use `equery/4`.
 
@@ -175,7 +177,6 @@ For example:
 ```erlang
 pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3], 60000).
 ```
-
 
 #### Batch Queries
 To execute a batch:

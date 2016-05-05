@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ostinelli/pgpool.svg?branch=master)](https://travis-ci.org/ostinelli/pgpool)
+
 # PGPool
 
 PGPool is a PosgreSQL client that automatically uses connection pools and handles reconnections in case of errors.

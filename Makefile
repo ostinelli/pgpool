@@ -9,3 +9,7 @@ clean:
 
 dialyze:
 	@rebar3 dialyzer
+
+tests: all
+	ct_run -dir $(PROJECT_DIR)/test -logdir $(PROJECT_DIR)/test/results \
+	-pa `rebar3 path`

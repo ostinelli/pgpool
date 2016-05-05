@@ -24,7 +24,8 @@ Temporary Items
 
 # project ignores
 _build
-/*.log
 erl_crash.dump
 *.beam
-.rebar
+test/results/*
+!test/results/.keep
+

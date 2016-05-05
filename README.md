@@ -94,7 +94,9 @@ pgpool:squery(DatabaseName, Sql) -> Result
 Types:
   DatabaseName = atom()
   Sql = string() | iodata()
-  Result = (see epgsql for reply/error types) | {error, no_connection}
+  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection}
+    Count =  non_neg_integer()
+    Rows = (see epgsql for more details)
 ```
 
 For example:
@@ -115,7 +117,9 @@ Types:
   DatabaseName = atom()
   Sql = string() | iodata()
   RetryTimeout = non_neg_integer() | infinity
-  Result = (see epgsql for reply/error types) | {error, no_connection}
+  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
+    Count = non_neg_integer()
+    Rows = (see epgsql for more details)
 ```
 
 `RetryTimeout` specifies how much time (in milliseconds) will be spent waiting to retry (that is, excluding the time taken to call the database). Set to `infinity` if you want the call to block forever until a connection becomes available.
@@ -135,7 +139,9 @@ Types:
   DatabaseName = atom()
   Statement = string()
   Params = list()
-  Result = (see epgsql for reply/error types) | {error, no_connection}
+  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
+    Count = non_neg_integer()
+    Rows = (see epgsql for more details)
 ```
 
 For example:
@@ -157,7 +163,9 @@ Types:
   Statement = string()
   Params = list()
   RetryTimeout = non_neg_integer() | infinity
-  Result = (see epgsql for reply/error types) | {error, no_connection}
+  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
+    Count = non_neg_integer()
+    Rows = (see epgsql for more details)
 ```
 
 `RetryTimeout` specifies how much time (in milliseconds) will be spent waiting to retry (that is, excluding the time taken to call the database). Set to `infinity` if you want the call to block forever until a connection becomes available.

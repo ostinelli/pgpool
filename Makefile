@@ -13,3 +13,8 @@ dialyze:
 tests: all
 	ct_run -dir $(PROJECT_DIR)/test -logdir $(PROJECT_DIR)/test/results \
 	-pa `rebar3 path`
+
+travis:
+	@$(PROJECT_DIR)/rebar3 compile
+	ct_run -dir $(PROJECT_DIR)/test -logdir $(PROJECT_DIR)/test/results \
+	-pa `$(PROJECT_DIR)/rebar3 path`

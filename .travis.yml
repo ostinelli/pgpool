@@ -1,0 +1,26 @@
+language: erlang
+
+otp_release:
+  - 18.2.1
+  - 18.1
+  - 18.0
+  - 17.5
+  - 17.4
+  - 17.3
+  - 17.0
+  - R16B03-1
+  - R16B03
+  - R16B02
+  - R16B01
+
+addons:
+  postgresql: "9.3"
+
+before_install:
+  - wget https://s3.amazonaws.com/rebar3/rebar3
+  - chmod +x rebar3
+
+before_script:
+  - psql -c 'create database pgpool_test;' -U postgres
+
+script: "make travis"

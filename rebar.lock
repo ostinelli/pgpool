@@ -1,6 +1,6 @@
 [{<<"epgsql">>,
   {git,"git://github.com/epgsql/epgsql.git",
-       {ref,"e0379f93f2fe54055d4e0304dd2fcfe1ffd97ec1"}},
+       {ref,"b4bbfdabbeef91ea2586fb00518e7595af24df49"}},
   0},
  {<<"poolboy">>,
   {git,"git://github.com/devinus/poolboy.git",

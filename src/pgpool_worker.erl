@@ -31,6 +31,8 @@
 -export([start_link/1]).
 -export([squery/2, squery/3]).
 -export([equery/3, equery/4]).
+-export([parse/2]).
+-export([execute_batch/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -100,6 +102,20 @@ equery(DatabaseName, Statement, Params, RetryTimeout) ->
         end
     end).
 
+-spec parse(DatabaseName :: atom(), Statement :: string()) ->
+    {ok, Statement :: any()} | {error, any()}.
+parse(DatabaseName, Statement) ->
+    poolboy:transaction(DatabaseName, fun(Worker) ->
+        gen_server:call(Worker, {parse, Statement}, infinity)
+    end).
+
+-spec execute_batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
+    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
+execute_batch(DatabaseName, Statements) ->
+    poolboy:transaction(DatabaseName, fun(Worker) ->
+        gen_server:call(Worker, {execute_batch, Statements}, infinity)
+    end).
+
 %% ===================================================================
 %% Callbacks
 %% ===================================================================
@@ -158,6 +174,12 @@ handle_call({squery, Sql}, _From, #state{conn = Conn} = State) ->
 
 handle_call({equery, Statement, Params}, _From, #state{conn = Conn} = State) ->
     {reply, epgsql:equery(Conn, Statement, Params), State};
+
+handle_call({parse, Statement}, _From, #state{conn = Conn} = State) ->
+    {reply, epgsql:parse(Conn, Statement), State};
+
+handle_call({execute_batch, Statements}, _From, #state{conn = Conn} = State) ->
+    {reply, epgsql:execute_batch(Conn, Statements), State};
 
 handle_call(Request, From, State) ->
     error_logger:warning_msg("Received from ~p an unknown call message: ~p", [Request, From]),

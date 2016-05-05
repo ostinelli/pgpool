@@ -29,6 +29,8 @@
 -export([start/0, stop/0]).
 -export([squery/2, squery/3]).
 -export([equery/3, equery/4]).
+-export([parse/2]).
+-export([execute_batch/2]).
 
 %% ===================================================================
 %% API
@@ -66,6 +68,16 @@ equery(DatabaseName, Statement, Params) ->
     any() | {error, no_connection}.
 equery(DatabaseName, Statement, Params, RetryTimeout) ->
     pgpool_worker:equery(DatabaseName, Statement, Params, RetryTimeout).
+
+-spec parse(DatabaseName :: atom(), Statement :: string()) ->
+    {ok, Statement :: any()} | {error, any()}.
+parse(DatabaseName, Statement) ->
+    pgpool_worker:parse(DatabaseName, Statement).
+
+-spec execute_batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
+    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
+execute_batch(DatabaseName, Statements) ->
+    pgpool_worker:execute_batch(DatabaseName, Statements).
 
 %% ===================================================================
 %% Internal

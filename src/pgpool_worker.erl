@@ -31,7 +31,8 @@
 -export([start_link/1]).
 -export([squery/2, squery/3]).
 -export([equery/3, equery/4]).
--export([parse/2]).
+-export([parse/2, parse/3]).
+-export([execute/3]).
 -export([execute_batch/2]).
 
 %% gen_server callbacks
@@ -109,6 +110,20 @@ parse(DatabaseName, Statement) ->
         gen_server:call(Worker, {parse, Statement}, infinity)
     end).
 
+-spec parse(DatabaseName :: atom(), StatementName :: string(), Statement :: string()) ->
+    {ok, Statement :: any()} | {error, any()}.
+parse(DatabaseName, StatementName, Statement) ->
+    poolboy:transaction(DatabaseName, fun(Worker) ->
+        gen_server:call(Worker, {parse, StatementName, Statement}, infinity)
+    end).
+
+-spec execute(DatabaseName :: atom(), StatementName :: string(), Params :: list()) ->
+    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
+execute(DatabaseName, StatementName, Params) ->
+    poolboy:transaction(DatabaseName, fun(Worker) ->
+        gen_server:call(Worker, {execute, StatementName, Params}, infinity)
+    end).
+
 -spec execute_batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
 execute_batch(DatabaseName, Statements) ->
@@ -177,6 +192,12 @@ handle_call({equery, Statement, Params}, _From, #state{conn = Conn} = State) ->
 
 handle_call({parse, Statement}, _From, #state{conn = Conn} = State) ->
     {reply, epgsql:parse(Conn, Statement), State};
+
+handle_call({parse, StatementName, Statement}, _From, #state{conn = Conn} = State) ->
+    {reply, epgsql:parse(Conn, StatementName, Statement, []), State};
+
+handle_call({execute, StatementName, Params}, _From, #state{conn = Conn} = State) ->
+    {reply, epgsql:prepared_query(Conn, StatementName, Params), State};
 
 handle_call({execute_batch, Statements}, _From, #state{conn = Conn} = State) ->
     {reply, epgsql:execute_batch(Conn, Statements), State};

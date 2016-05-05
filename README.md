@@ -168,6 +168,43 @@ For example:
 pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3], 60000).
 ```
 
+#### Prepared Statements
+First, prepare your query:
+
+```erlang
+pgpool:parse(DatabaseName, StatementName, Statement) -> Result
+
+Types:
+  DatabaseName = atom()
+  StatementName = string()
+  Statement = string()
+  Result = {ok, ParsedStatement} | {error, Reason}
+    ParsedStatement = (see epgsql for more details)
+    Reason = (see epgsql for more details)
+```
+Then, execute it:
+
+```erlang
+pgpool:execute(DatabaseName, StatementName, Params) -> Result
+
+Types:
+  DatabaseName = atom()
+  StatementName = string()
+  Params = list()
+  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
+    Count = non_neg_integer()
+    Rows = (see epgsql for more details)
+```
+
+For example:
+
+```erlang
+StatementName = "insert_user",
+
+{ok, _} = pgpool:parse(pgpool_test, StatementName, "INSERT INTO users (name) VALUES ($1);"),
+{ok, 1} = pgpool:execute(pgpool_test, StatementName, ["Hedy"]).
+```
+
 #### Batch Query
 First, prepare your query / queries:
 

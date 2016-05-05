@@ -37,7 +37,8 @@
     squery_with_timeout/1,
     equery_without_timeout/1,
     equery_with_timeout/1,
-    parse_and_batch/1
+    parse_and_execute/1,
+    parse_and_execute_batch/1
 ]).
 
 %% include
@@ -79,7 +80,8 @@ groups() ->
             squery_with_timeout,
             equery_without_timeout,
             equery_with_timeout,
-            parse_and_batch
+            parse_and_execute,
+            parse_and_execute_batch
         ]}
     ].
 %% -------------------------------------------------------------------
@@ -194,7 +196,21 @@ equery_with_timeout(_Config) ->
         {1, <<"First Movie">>, 1972}
     ]} = pgpool:equery(pgpool_test, "SELECT * FROM films WHERE year = $1;", [1972], 1000).
 
-parse_and_batch(_Config) ->
+parse_and_execute(_Config) ->
+    StatementName = "insert_film",
+
+    {ok, _S} = pgpool:parse(pgpool_test, StatementName, "INSERT INTO films (name, year) VALUES ($1, $2);"),
+
+    {ok, 1} = pgpool:execute(pgpool_test, StatementName, ["First Movie", 1972]),
+    {ok, [
+        {column, <<"id">>, int4, _, _, _},
+        {column, <<"name">>, text, _, _, _},
+        {column, <<"year">>, int4, _, _, _}
+    ], [
+        {1, <<"First Movie">>, 1972}
+    ]} = pgpool:equery(pgpool_test, "SELECT * FROM films WHERE year = $1;", [1972]).
+
+parse_and_execute_batch(_Config) ->
     {ok, S1} = pgpool:parse(pgpool_test, "INSERT INTO films (name, year) VALUES ($1, $2);"),
     [{ok, 1}, {ok, 1}] = pgpool:execute_batch(pgpool_test, [
         {S1, ["First Movie", 1972]},

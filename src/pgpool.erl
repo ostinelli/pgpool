@@ -29,9 +29,7 @@
 -export([start/0, stop/0]).
 -export([squery/2, squery/3]).
 -export([equery/3, equery/4]).
--export([parse/2, parse/3]).
--export([execute/3]).
--export([execute_batch/2]).
+-export([batch/2]).
 
 %% ===================================================================
 %% API
@@ -70,25 +68,10 @@ equery(DatabaseName, Statement, Params) ->
 equery(DatabaseName, Statement, Params, RetryTimeout) ->
     pgpool_worker:equery(DatabaseName, Statement, Params, RetryTimeout).
 
--spec parse(DatabaseName :: atom(), Statement :: string()) ->
-    {ok, Statement :: any()} | {error, any()}.
-parse(DatabaseName, Statement) ->
-    pgpool_worker:parse(DatabaseName, Statement).
-
--spec parse(DatabaseName :: atom(), StatementName :: string(), Statement :: string()) ->
-    {ok, Statement :: any()} | {error, any()}.
-parse(DatabaseName, StatementName, Statement) ->
-    pgpool_worker:parse(DatabaseName, StatementName, Statement).
-
--spec execute(DatabaseName :: atom(), StatementName :: string(), Params :: list()) ->
+-spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
-execute(DatabaseName, StatementName, Params) ->
-    pgpool_worker:execute(DatabaseName, StatementName, Params).
-
--spec execute_batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
-    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
-execute_batch(DatabaseName, Statements) ->
-    pgpool_worker:execute_batch(DatabaseName, Statements).
+batch(DatabaseName, StatementsWithParams) ->
+    pgpool_worker:batch(DatabaseName, StatementsWithParams).
 
 %% ===================================================================
 %% Internal

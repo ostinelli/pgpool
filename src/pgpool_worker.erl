@@ -31,9 +31,7 @@
 -export([start_link/1]).
 -export([squery/2, squery/3]).
 -export([equery/3, equery/4]).
--export([parse/2, parse/3]).
--export([execute/3]).
--export([execute_batch/2]).
+-export([batch/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -46,7 +44,8 @@
     pass = undefined :: undefined | string(),
     connect_options = undefined :: undefined | list(),
     conn = undefined :: undefined | any(),
-    timer_ref = undefined :: undefined | reference()
+    timer_ref = undefined :: undefined | reference(),
+    prepared_statements = undefined :: any()
 }).
 
 %% macros
@@ -103,32 +102,11 @@ equery(DatabaseName, Statement, Params, RetryTimeout) ->
         end
     end).
 
--spec parse(DatabaseName :: atom(), Statement :: string()) ->
-    {ok, Statement :: any()} | {error, any()}.
-parse(DatabaseName, Statement) ->
-    poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {parse, Statement}, infinity)
-    end).
-
--spec parse(DatabaseName :: atom(), StatementName :: string(), Statement :: string()) ->
-    {ok, Statement :: any()} | {error, any()}.
-parse(DatabaseName, StatementName, Statement) ->
-    poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {parse, StatementName, Statement}, infinity)
-    end).
-
--spec execute(DatabaseName :: atom(), StatementName :: string(), Params :: list()) ->
+-spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
-execute(DatabaseName, StatementName, Params) ->
+batch(DatabaseName, StatementsWithParams) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {execute, StatementName, Params}, infinity)
-    end).
-
--spec execute_batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
-    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
-execute_batch(DatabaseName, Statements) ->
-    poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {execute_batch, Statements}, infinity)
+        gen_server:call(Worker, {batch, StatementsWithParams}, infinity)
     end).
 
 %% ===================================================================
@@ -161,7 +139,8 @@ init(Args) ->
         host = Host,
         user = User,
         pass = Pass,
-        connect_options = ConnectOptions
+        connect_options = ConnectOptions,
+        prepared_statements = dict:new()
     },
 
     %% connect
@@ -190,17 +169,20 @@ handle_call({squery, Sql}, _From, #state{conn = Conn} = State) ->
 handle_call({equery, Statement, Params}, _From, #state{conn = Conn} = State) ->
     {reply, epgsql:equery(Conn, Statement, Params), State};
 
-handle_call({parse, Statement}, _From, #state{conn = Conn} = State) ->
-    {reply, epgsql:parse(Conn, Statement), State};
-
-handle_call({parse, StatementName, Statement}, _From, #state{conn = Conn} = State) ->
-    {reply, epgsql:parse(Conn, StatementName, Statement, []), State};
-
-handle_call({execute, StatementName, Params}, _From, #state{conn = Conn} = State) ->
-    {reply, epgsql:prepared_query(Conn, StatementName, Params), State};
-
-handle_call({execute_batch, Statements}, _From, #state{conn = Conn} = State) ->
-    {reply, epgsql:execute_batch(Conn, Statements), State};
+handle_call({batch, StatementsWithParams}, _From, #state{
+    conn = Conn
+} = State) ->
+    %% prepare & cache statements
+    F = fun({Statement, Params}, {PreparedStatementsAcc, StateAcc}) ->
+        %% get or prepare
+        {PreparedStatement, StateAcc1} = prepare_or_get_statement(Statement, StateAcc),
+        %% acc
+        {[{PreparedStatement, Params} | PreparedStatementsAcc], StateAcc1}
+    end,
+    {StatementsForBatchRev, State1} = lists:foldl(F, {[], State}, StatementsWithParams),
+    StatementsForBatch = lists:reverse(StatementsForBatchRev),
+    %% execute batch
+    {reply, epgsql:execute_batch(Conn, StatementsForBatch), State1};
 
 handle_call(Request, From, State) ->
     error_logger:warning_msg("Received from ~p an unknown call message: ~p", [Request, From]),
@@ -291,3 +273,22 @@ timeout(#state{
     end,
     TimerRef = erlang:send_after(?RECONNECT_TIMEOUT_MS, self(), connect),
     State#state{timer_ref = TimerRef}.
+
+
+prepare_or_get_statement(Statement, #state{
+    conn = Conn,
+    prepared_statements = PreparedStatements
+} = State) ->
+    case dict:find(Statement, PreparedStatements) of
+        {ok, PreparedStatement} ->
+            {PreparedStatement, State};
+        error ->
+            %% prepare statement
+            {ok, PreparedStatement} = epgsql:parse(Conn, Statement),
+            %% store
+            PreparedStatements1 = dict:store(Statement, PreparedStatement, PreparedStatements),
+            %% update state
+            State1 = State#state{prepared_statements = PreparedStatements1},
+            %% return
+            {PreparedStatement, State1}
+    end.

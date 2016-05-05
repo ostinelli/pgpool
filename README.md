@@ -176,66 +176,17 @@ For example:
 pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3], 60000).
 ```
 
-#### Prepared Statements
-First, prepare your query:
+
+#### Batch Queries
+To execute a batch:
 
 ```erlang
-pgpool:parse(DatabaseName, StatementName, Statement) -> Result
+pgpool:batch(DatabaseName, StatementsWithParams) -> Result
 
 Types:
   DatabaseName = atom()
-  StatementName = string()
+  StatementsWithParams = [{Statement, Params}]
   Statement = string()
-  Result = {ok, ParsedStatement} | {error, Reason}
-    ParsedStatement = (see epgsql for more details)
-    Reason = (see epgsql for more details)
-```
-Then, execute it:
-
-```erlang
-pgpool:execute(DatabaseName, StatementName, Params) -> Result
-
-Types:
-  DatabaseName = atom()
-  StatementName = string()
-  Params = list()
-  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
-    Count = non_neg_integer()
-    Rows = (see epgsql for more details)
-```
-
-For example:
-
-```erlang
-StatementName = "insert_user",
-
-{ok, _} = pgpool:parse(pgpool_test, StatementName, "INSERT INTO users (name) VALUES ($1);"),
-{ok, 1} = pgpool:execute(pgpool_test, StatementName, ["Hedy"]).
-```
-
-#### Batch Query
-First, prepare your query / queries:
-
-```erlang
-pgpool:parse(DatabaseName, Statement) -> Result
-
-Types:
-  DatabaseName = atom()
-  Statement = string()
-  Result = {ok, ParsedStatement} | {error, Reason}
-    ParsedStatement = (see epgsql for more details)
-    Reason = (see epgsql for more details)
-```
-
-Then, execute a batch:
-
-```erlang
-pgpool:execute_batch(DatabaseName, Statements) -> Result
-
-Types:
-  DatabaseName = atom()
-  Statements = [{ParsedStatement, Params}]
-  ParsedStatement = (see epgsql for more details)
   Params = list()
   Result =  [{ok, Count} | {ok, Count, Rows}].
     Count =  non_neg_integer()
@@ -245,14 +196,15 @@ Types:
 For example:
 
 ```erlang
-{ok, S1} = pgpool:parse(pgpool_test, "INSERT INTO users (name) VALUES ($1);"),
-{ok, S2} = pgpool:parse(pgpool_test, "INSERT INTO films (name, year) VALUES ($1, $2);"),
+S = "INSERT INTO users (name) VALUES ($1);",
 
-[{ok, 1}, {ok, 1}] = pgpool:execute_batch(pgpool_test, [
-    {S1, ["Hedy"]},
-    {S2, ["First Movie", 1978]}
+[{ok, 1}, {ok, 1}] = pgpool:batch(db1_name, [
+    {S, ["Hedy"]},
+    {S, ["Roberto"]}
 ]).
 ```
+
+> Under the hood, PgPool will prepare your statements and cache them for you. If you use a lot of different statements, consider memory usage because the statements are not garbage collected.
 
 ## Contributing
 So you want to contribute? That's great! Please follow the guidelines below. It will make it easier to get merged in.

@@ -4,7 +4,9 @@
 
 PGPool is a PosgreSQL client that automatically uses connection pools and handles reconnections in case of errors.
 
-Under the hood, it uses:
+PGPool also optimizes all of your statements, by preparing them and caching them for you under the hood.
+
+It uses:
 
  * [epgsql](https://github.com/epgsql/epgsql) as the PostgreSQL driver.
  * [poolboy](https://github.com/devinus/poolboy) as pooling library.
@@ -105,6 +107,8 @@ For example:
 pgpool:squery(db1_name, "SELECT * FROM users;").
 ```
 
+> Simple queries cannot be optimized by PGPool since they cannot be prepared. If you want to optimize and cache your queries, consider using `equery/3,4` or `batch/2` instead.
+
 ##### Retries
 In case there's no available connection to the database, the standard `squery/2` function will return `{error, no_connection}`. If you want to keep retrying until a connection is available, you can use `squery/3`.
 
@@ -150,7 +154,7 @@ For example:
 pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3]).
 ```
 
-> Under the hood, PgPool will prepare your statements and cache them for you. If you use a lot of different statements, consider memory usage because the statements are not garbage collected.
+> PGPool will prepare your statements and cache them for you, which results in considerable speed improvements. If you use a lot of different statements, consider memory usage because the statements are not garbage collected.
 
 ##### Retries
 In case there's no available connection to the database, the standard `equery/3` function will return `{error, no_connection}`. If you want to keep retrying until a connection is available, you can use `equery/4`.
@@ -205,7 +209,8 @@ S = "INSERT INTO users (name) VALUES ($1);",
 ]).
 ```
 
-> Under the hood, PgPool will prepare your statements and cache them for you. If you use a lot of different statements, consider memory usage because the statements are not garbage collected.
+> PGPool will prepare your statements and cache them for you, which results in considerable speed improvements. If you use a lot of different statements, consider memory usage because the statements are not garbage collected.
+
 
 ## Contributing
 So you want to contribute? That's great! Please follow the guidelines below. It will make it easier to get merged in.
@@ -213,3 +218,9 @@ So you want to contribute? That's great! Please follow the guidelines below. It 
 Before implementing a new feature, please submit a ticket to discuss what you intend to do. Your feature might already be in the works, or an alternative implementation might have already been discussed.
 
 Do not commit to master in your fork. Provide a clean branch without merge commits. Every pull request should have its own topic branch. In this way, every additional adjustments to the original pull request might be done easily, and squashed with `git rebase -i`. The updated branch will be visible in the same pull request, so there will be no need to open new pull requests when there are changes to be applied.
+
+Ensure to include proper testing. To run PGPool tests, you need to create the database `pgpool_test` for user `postgres` with no password, and then simply run from the project's root directory:
+
+```
+$ make tests
+```

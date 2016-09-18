@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/ostinelli/pgpool.svg?branch=master)](https://travis-ci.org/ostinelli/pgpool)
+[![Hex pm](https://img.shields.io/hexpm/v/pgpool.svg)](https://hex.pm/packages/pgpool)
 
 # PGPool
 

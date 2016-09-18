@@ -13,18 +13,22 @@ It uses:
 
 
 ## Install
-
-If you're using [rebar](https://github.com/rebar/rebar), add `pgpool` as a dependency in your project's `rebar.config` file:
+If you're using [rebar3](https://github.com/erlang/rebar3), add `pgpool` as a dependency in your project's `rebar.config` file:
 
 ```erlang
-{pgpool, ".*", {git, "git://github.com/ostinelli/pgpool.git", "master"}}
+{pgpool, {git, "git://github.com/ostinelli/pgpool.git", {tag, "1.1.0"}}}
 ```
 
-Then, get and compile your dependencies:
+Or, if you're using [Hex.pm](https://hex.pm/) as package manager (with the [rebar3_hex](https://github.com/hexpm/rebar3_hex) plugin):
 
+```erlang
+{pgpool, "1.1.0"}
 ```
-$ rebar get-deps
-$ rebar compile
+
+Then, compile:
+
+```bash
+$ rebar3 compile
 ```
 
 ## Usage

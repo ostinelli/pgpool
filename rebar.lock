@@ -1,8 +1,2 @@
-[{<<"epgsql">>,
-  {git,"git://github.com/epgsql/epgsql.git",
-       {ref,"b4bbfdabbeef91ea2586fb00518e7595af24df49"}},
-  0},
- {<<"poolboy">>,
-  {git,"git://github.com/devinus/poolboy.git",
-       {ref,"3bb48a893ff5598f7c73731ac17545206d259fac"}},
-  0}].
+[{<<"epgsql">>,{pkg,<<"epgsql">>,<<"3.2.0">>},0},
+ {<<"poolboy">>,{pkg,<<"poolboy">>,<<"1.5.1">>},0}].

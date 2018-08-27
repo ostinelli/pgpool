@@ -167,8 +167,8 @@ handle_call({squery, Sql}, _From, #state{conn = Conn} = State) ->
     {reply, epgsql:squery(Conn, Sql), State};
 
 handle_call({equery, Statement, Params}, _From, #state{conn = Conn} = State) ->
-    {_, State1} = prepare_or_get_statement(Statement, State),
-    {reply, epgsql:prepared_query(Conn, Statement, Params), State1};
+    {_, Name, State1} = prepare_or_get_statement(Statement, State),
+    {reply, epgsql:prepared_query(Conn, Name, Params), State1};
 
 handle_call({batch, StatementsWithParams}, _From, #state{
     conn = Conn
@@ -176,7 +176,7 @@ handle_call({batch, StatementsWithParams}, _From, #state{
     %% prepare & cache statements
     F = fun({Statement, Params}, {PreparedStatementsAcc, StateAcc}) ->
         %% get or prepare
-        {PreparedStatement, StateAcc1} = prepare_or_get_statement(Statement, StateAcc),
+        {PreparedStatement, _, StateAcc1} = prepare_or_get_statement(Statement, StateAcc),
         %% acc
         {[{PreparedStatement, Params} | PreparedStatementsAcc], StateAcc1}
     end,
@@ -275,21 +275,22 @@ timeout(#state{
     TimerRef = erlang:send_after(?RECONNECT_TIMEOUT_MS, self(), connect),
     State#state{timer_ref = TimerRef}.
 
--spec prepare_or_get_statement(Statement :: string(), #state{}) -> {PreparedStatement :: any(), #state{}}.
+-spec prepare_or_get_statement(Statement :: string(), #state{}) -> {PreparedStatement :: any(), StatementName :: string(), #state{}}.
 prepare_or_get_statement(Statement, #state{
     conn = Conn,
     prepared_statements = PreparedStatements
 } = State) ->
-    case dict:find(Statement, PreparedStatements) of
+	Name = "statement_" ++ integer_to_list(erlang:phash2(Statement)),
+    case dict:find(Name, PreparedStatements) of
         {ok, PreparedStatement} ->
-            {PreparedStatement, State};
+            {PreparedStatement, Name, State};
         error ->
             %% prepare statement
-            {ok, PreparedStatement} = epgsql:parse(Conn, Statement, Statement, []),
+            {ok, PreparedStatement} = epgsql:parse(Conn, Name, Statement, []),
             %% store
-            PreparedStatements1 = dict:store(Statement, PreparedStatement, PreparedStatements),
+            PreparedStatements1 = dict:store(Name, PreparedStatement, PreparedStatements),
             %% update state
             State1 = State#state{prepared_statements = PreparedStatements1},
             %% return
-            {PreparedStatement, State1}
+            {PreparedStatement, Name, State1}
     end.

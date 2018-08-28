@@ -23,7 +23,7 @@ If you're using [rebar3](https://github.com/erlang/rebar3), add `pgpool` as a de
 Or, if you're using [Hex.pm](https://hex.pm/) as package manager (with the [rebar3_hex](https://github.com/hexpm/rebar3_hex) plugin):
 
 ```erlang
-{pgpool, "1.1.1"}
+{pgpool, "1.2.0"}
 ```
 
 Then, compile:

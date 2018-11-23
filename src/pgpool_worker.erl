@@ -256,7 +256,7 @@ connect(#state{
 
     case epgsql:connect(Host, User, Pass, ConnectOptions) of
         {ok, Conn} ->
-            State#state{conn = Conn};
+            State#state{conn = Conn, prepared_statements = dict:new()};
         Error ->
             error_logger:error_msg("Error connecting to database ~p with host ~p, user ~p, options ~p: ~p, will try reconnecting in ~p ms", [
                 DatabaseName, Host, User, ConnectOptions, Error, ?RECONNECT_TIMEOUT_MS

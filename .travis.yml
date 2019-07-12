@@ -1,6 +1,7 @@
 language: erlang
 
 otp_release:
+  - 21.1.2
   - 20.2
   - 20.1
   - 20.1
@@ -12,9 +13,6 @@ otp_release:
   - 18.2.1
   - 18.1
   - 18.0
-  - 17.5
-  - 17.4
-  - 17.0
 
 branches:
   only:

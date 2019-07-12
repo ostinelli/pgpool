@@ -18,7 +18,6 @@
         {mod, {pgpool_app, []}},
         {env, []},
 
-        {maintainers, ["Roberto Ostinelli"]},
         {licenses, ["MIT"]},
         {links, [{"Github", "https://github.com/ostinelli/pgpool"}]}
     ]

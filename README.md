@@ -23,7 +23,7 @@ If you're using [rebar3](https://github.com/erlang/rebar3), add `pgpool` as a de
 Or, if you're using [Hex.pm](https://hex.pm/) as package manager (with the [rebar3_hex](https://github.com/hexpm/rebar3_hex) plugin):
 
 ```erlang
-{pgpool, "1.2.1"}
+{pgpool, "2.0.0"}
 ```
 
 Then, compile:
@@ -173,7 +173,7 @@ Before implementing a new feature, please submit a ticket to discuss what you in
 
 Do not commit to master in your fork. Provide a clean branch without merge commits. Every pull request should have its own topic branch. In this way, every additional adjustments to the original pull request might be done easily, and squashed with `git rebase -i`. The updated branch will be visible in the same pull request, so there will be no need to open new pull requests when there are changes to be applied.
 
-Ensure to include proper testing. To run PGPool tests, you need to create the database `pgpool_test` for user `postgres` with no password, and then simply run from the project's root directory:
+Ensure that proper testing is included. To run PGPool tests, you need to create the database `pgpool_test` for user `postgres` with no password, and then simply run from the project's root directory:
 
 ```
 $ make tests

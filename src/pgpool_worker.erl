@@ -77,7 +77,7 @@ equery(DatabaseName, Statement, Params) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
 batch(DatabaseName, StatementsWithParams) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        gen_server:call(Worker, {batch, StatementsWithParams}, infinity)
+        gen_server:call(Worker, {batch, StatementsWithParams})
     end).
 
 %% ===================================================================

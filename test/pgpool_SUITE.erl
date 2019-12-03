@@ -33,10 +33,8 @@
 
 %% tests
 -export([
-    squery_without_timeout/1,
-    squery_with_timeout/1,
-    equery_without_timeout/1,
-    equery_with_timeout/1,
+    squery/1,
+    equery/1,
     batch/1
 ]).
 
@@ -75,10 +73,8 @@ all() ->
 groups() ->
     [
         {common_tests, [shuffle], [
-            squery_without_timeout,
-            squery_with_timeout,
-            equery_without_timeout,
-            equery_with_timeout,
+            squery,
+            equery,
             batch
         ]}
     ].
@@ -154,7 +150,7 @@ end_per_testcase(_TestCase, _Config) ->
 %% ===================================================================
 %% Tests
 %% ===================================================================
-squery_without_timeout(_Config) ->
+squery(_Config) ->
     {ok, 1} = pgpool:squery(pgpool_test, "INSERT INTO films (name, year) VALUES ('First Movie', 1972);"),
     {ok, [
         {column, <<"id">>, int4, _, _, _},
@@ -164,17 +160,7 @@ squery_without_timeout(_Config) ->
         {<<"1">>, <<"First Movie">>, <<"1972">>}
     ]} = pgpool:squery(pgpool_test, "SELECT * FROM films WHERE year = 1972;").
 
-squery_with_timeout(_Config) ->
-    {ok, 1} = pgpool:squery(pgpool_test, "INSERT INTO films (name, year) VALUES ('First Movie', 1972);", 1000),
-    {ok, [
-        {column, <<"id">>, int4, _, _, _},
-        {column, <<"name">>, text, _, _, _},
-        {column, <<"year">>, int4, _, _, _}
-    ], [
-        {<<"1">>, <<"First Movie">>, <<"1972">>}
-    ]} = pgpool:squery(pgpool_test, "SELECT * FROM films WHERE year = 1972;", 1000).
-
-equery_without_timeout(_Config) ->
+equery(_Config) ->
     {ok, 1} = pgpool:equery(pgpool_test, "INSERT INTO films (name, year) VALUES ($1, $2);", ["First Movie", 1972]),
     {ok, [
         {column, <<"id">>, int4, _, _, _},
@@ -183,16 +169,6 @@ equery_without_timeout(_Config) ->
     ], [
         {1, <<"First Movie">>, 1972}
     ]} = pgpool:equery(pgpool_test, "SELECT * FROM films WHERE year = $1;", [1972]).
-
-equery_with_timeout(_Config) ->
-    {ok, 1} = pgpool:equery(pgpool_test, "INSERT INTO films (name, year) VALUES ($1, $2);", ["First Movie", 1972], 1000),
-    {ok, [
-        {column, <<"id">>, int4, _, _, _},
-        {column, <<"name">>, text, _, _, _},
-        {column, <<"year">>, int4, _, _, _}
-    ], [
-        {1, <<"First Movie">>, 1972}
-    ]} = pgpool:equery(pgpool_test, "SELECT * FROM films WHERE year = $1;", [1972], 1000).
 
 batch(_Config) ->
     S1 = "INSERT INTO films (name, year) VALUES ($1, $2);",

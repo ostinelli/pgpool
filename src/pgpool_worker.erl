@@ -29,8 +29,8 @@
 
 %% API
 -export([start_link/1]).
--export([squery/2, squery/3]).
--export([equery/3, equery/4]).
+-export([squery/2]).
+-export([equery/3]).
 -export([batch/2]).
 
 %% gen_server callbacks
@@ -63,43 +63,14 @@ start_link(Args) ->
 -spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) ->
     any() | {error, no_connection}.
 squery(DatabaseName, Sql) ->
-    squery(DatabaseName, Sql, 0).
-
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), RetryTimeout :: non_neg_integer() | infinity) ->
-    any() | {error, no_connection}.
-squery(DatabaseName, Sql, RetryTimeout) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        case gen_server:call(Worker, {squery, Sql}, infinity) of
-            {error, no_connection} when RetryTimeout =:= infinity ->
-                timer:sleep(?RETRY_SLEEP_MS),
-                squery(DatabaseName, Sql, infinity);
-            {error, no_connection} when RetryTimeout > 0 ->
-                timer:sleep(?RETRY_SLEEP_MS),
-                squery(DatabaseName, Sql, RetryTimeout - ?RETRY_SLEEP_MS);
-            Result ->
-                Result
-        end
+        gen_server:call(Worker, {squery, Sql})
     end).
 
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) ->
-    any() | {error, no_connection}.
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) -> any().
 equery(DatabaseName, Statement, Params) ->
-    equery(DatabaseName, Statement, Params, 0).
-
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), RetryTimeout :: non_neg_integer() | infinity) ->
-    any() | {error, no_connection}.
-equery(DatabaseName, Statement, Params, RetryTimeout) ->
     poolboy:transaction(DatabaseName, fun(Worker) ->
-        case gen_server:call(Worker, {equery, Statement, Params}, infinity) of
-            {error, no_connection} when RetryTimeout =:= infinity ->
-                timer:sleep(?RETRY_SLEEP_MS),
-                equery(DatabaseName, Statement, Params, infinity);
-            {error, no_connection} when RetryTimeout > 0 ->
-                timer:sleep(?RETRY_SLEEP_MS),
-                equery(DatabaseName, Statement, Params, RetryTimeout - ?RETRY_SLEEP_MS);
-            Result ->
-                Result
-        end
+        gen_server:call(Worker, {equery, Statement, Params})
     end).
 
 -spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->

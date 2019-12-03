@@ -114,31 +114,6 @@ pgpool:squery(db1_name, "SELECT * FROM users;").
 
 > Simple queries cannot be optimized by PGPool since they cannot be prepared. If you want to optimize and cache your queries, consider using `equery/3,4` or `batch/2` instead.
 
-##### Retries
-In case there's no available connection to the database, the standard `squery/2` function will return `{error, no_connection}`. If you want to keep retrying until a connection is available, you can use `squery/3`.
-
-Note however that this is a blocking call, and should be used only if needed.
-
-```erlang
-pgpool:squery(DatabaseName, Sql, RetryTimeout) -> Result
-
-Types:
-  DatabaseName = atom()
-  Sql = string() | iodata()
-  RetryTimeout = non_neg_integer() | infinity
-  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
-    Count = non_neg_integer()
-    Rows = (see epgsql for more details)
-```
-
-`RetryTimeout` specifies how much time (in milliseconds) will be spent waiting to retry (that is, excluding the time taken to call the database). Set to `infinity` if you want the call to block forever until a connection becomes available.
-
-For example:
-
-```erlang
-pgpool:squery(db1_name, "SELECT * FROM users;", 60000).
-```
-
 #### Extended Query
 
 ```erlang
@@ -160,32 +135,6 @@ pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3]).
 ```
 
 > PGPool will prepare your statements and cache them for you, which results in considerable speed improvements. If you use a lot of different statements, consider memory usage because the statements are not garbage collected.
-
-##### Retries
-In case there's no available connection to the database, the standard `equery/3` function will return `{error, no_connection}`. If you want to keep retrying until a connection is available, you can use `equery/4`.
-
-Note however that this is a blocking call, and should be used only if needed.
-
-```erlang
-pgpool:equery(DatabaseName, Statement, Params, RetryTimeout) -> Result
-
-Types:
-  DatabaseName = atom()
-  Statement = string()
-  Params = list()
-  RetryTimeout = non_neg_integer() | infinity
-  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
-    Count = non_neg_integer()
-    Rows = (see epgsql for more details)
-```
-
-`RetryTimeout` specifies how much time (in milliseconds) will be spent waiting to retry (that is, excluding the time taken to call the database). Set to `infinity` if you want the call to block forever until a connection becomes available.
-
-For example:
-
-```erlang
-pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3], 60000).
-```
 
 #### Batch Queries
 To execute a batch:

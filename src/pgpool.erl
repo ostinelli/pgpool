@@ -27,8 +27,8 @@
 
 %% API
 -export([start/0, stop/0]).
--export([squery/2, squery/3]).
--export([equery/3, equery/4]).
+-export([squery/2]).
+-export([equery/3]).
 -export([batch/2]).
 
 %% ===================================================================
@@ -53,20 +53,10 @@ stop() ->
 squery(DatabaseName, Sql) ->
     pgpool_worker:squery(DatabaseName, Sql).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), RetryTimeout :: non_neg_integer() | infinity) ->
-    any() | {error, no_connection}.
-squery(DatabaseName, Sql, RetryTimeout) ->
-    pgpool_worker:squery(DatabaseName, Sql, RetryTimeout).
-
 -spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) ->
     any() | {error, no_connection}.
 equery(DatabaseName, Statement, Params) ->
     pgpool_worker:equery(DatabaseName, Statement, Params).
-
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), RetryTimeout :: non_neg_integer() | infinity) ->
-    any() | {error, no_connection}.
-equery(DatabaseName, Statement, Params, RetryTimeout) ->
-    pgpool_worker:equery(DatabaseName, Statement, Params, RetryTimeout).
 
 -spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].

@@ -6,11 +6,13 @@ all:
 clean:
 	@rebar3 clean
 	@find $(PROJECT_DIR)/. -name "erl_crash\.dump" | xargs rm -f
+	@find $(PROJECT_DIR)/. -name "*\.beam" | xargs rm -f
+	@find $(PROJECT_DIR)/. -name "*\.so" | xargs rm -f
 
-dialyze:
+dialyzer:
 	@rebar3 dialyzer
 
-tests: all
+test: all
 	ct_run -dir $(PROJECT_DIR)/test -logdir $(PROJECT_DIR)/test/results \
 	-pa `rebar3 path`
 

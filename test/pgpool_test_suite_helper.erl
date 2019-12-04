@@ -26,32 +26,29 @@
 -module(pgpool_test_suite_helper).
 
 %% API
--export([set_environment_variables/0, set_environment_variables/1]).
+-export([set_environment_variables/0]).
 
 %% macros
 -define(PGPOOL_TEST_CONFIG_FILENAME, "pgpool-test.config").
-
 
 %% ===================================================================
 %% API
 %% ===================================================================
 set_environment_variables() ->
-    set_environment_variables(node()).
-set_environment_variables(Node) ->
     % read config file
     ConfigFilePath = filename:join([filename:dirname(code:which(?MODULE)), ?PGPOOL_TEST_CONFIG_FILENAME]),
     {ok, [AppsConfig]} = file:consult(ConfigFilePath),
     % loop to set variables
     F = fun({AppName, AppConfig}) ->
-        set_environment_for_app(Node, AppName, AppConfig)
+        set_environment_for_app(AppName, AppConfig)
     end,
     lists:foreach(F, AppsConfig).
 
 %% ===================================================================
 %% Internal
 %% ===================================================================
-set_environment_for_app(Node, AppName, AppConfig) ->
+set_environment_for_app(AppName, AppConfig) ->
     F = fun({Key, Val}) ->
-        ok = rpc:call(Node, application, set_env, [AppName, Key, Val])
+        ok = application:set_env(AppName, Key, Val)
     end,
     lists:foreach(F, AppConfig).

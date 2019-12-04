@@ -27,9 +27,9 @@
 
 %% API
 -export([start/0, stop/0]).
--export([squery/2]).
--export([equery/3]).
--export([batch/2]).
+-export([squery/2, squery/3]).
+-export([equery/3, equery/4]).
+-export([batch/2, batch/3]).
 
 %% ===================================================================
 %% API
@@ -48,20 +48,33 @@ start() ->
 stop() ->
     ok = application:stop(pgpool).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) ->
-    any() | {error, no_connection}.
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) -> any().
 squery(DatabaseName, Sql) ->
     pgpool_worker:squery(DatabaseName, Sql).
 
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) ->
-    any() | {error, no_connection}.
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), Options :: []) ->
+    any() | {error, no_available_connections}.
+squery(DatabaseName, Sql, Options) ->
+    pgpool_worker:squery(DatabaseName, Sql, Options).
+
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) -> any().
 equery(DatabaseName, Statement, Params) ->
     pgpool_worker:equery(DatabaseName, Statement, Params).
+
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), Options :: []) ->
+    any() | {error, no_available_connections}.
+equery(DatabaseName, Statement, Params, Options) ->
+    pgpool_worker:equery(DatabaseName, Statement, Params, Options).
 
 -spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
 batch(DatabaseName, StatementsWithParams) ->
     pgpool_worker:batch(DatabaseName, StatementsWithParams).
+
+-spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}], Options :: []) ->
+    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}] | {error, no_available_connections}.
+batch(DatabaseName, StatementsWithParams, Options) ->
+    pgpool_worker:batch(DatabaseName, StatementsWithParams, Options).
 
 %% ===================================================================
 %% Internal

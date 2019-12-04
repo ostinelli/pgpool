@@ -37,6 +37,11 @@
     equery/1,
     batch/1
 ]).
+-export([
+    squery_no_wait/1,
+    equery_no_wait/1,
+    batch_no_wait/1
+]).
 
 %% include
 -include_lib("common_test/include/ct.hrl").
@@ -55,7 +60,8 @@
 %% -------------------------------------------------------------------
 all() ->
     [
-        {group, common_tests}
+        {group, wait},
+        {group, no_wait}
     ].
 
 %% -------------------------------------------------------------------
@@ -72,10 +78,15 @@ all() ->
 %% -------------------------------------------------------------------
 groups() ->
     [
-        {common_tests, [shuffle], [
+        {wait, [shuffle], [
             squery,
             equery,
             batch
+        ]},
+        {no_wait, [shuffle], [
+            squery_no_wait,
+            equery_no_wait,
+            batch_no_wait
         ]}
     ].
 %% -------------------------------------------------------------------
@@ -108,7 +119,8 @@ end_per_suite(_Config) ->
 %% Config0 = Config1 = [tuple()]
 %% Reason = term()
 %% -------------------------------------------------------------------
-init_per_group(_GroupName, Config) -> Config.
+init_per_group(_GroupName, Config) ->
+    Config.
 
 %% -------------------------------------------------------------------
 %% Function: end_per_group(GroupName, Config0) ->
@@ -116,7 +128,8 @@ init_per_group(_GroupName, Config) -> Config.
 %% GroupName = atom()
 %% Config0 = Config1 = [tuple()]
 %% -------------------------------------------------------------------
-end_per_group(_GroupName, _Config) -> ok.
+end_per_group(_GroupName, _Config) ->
+    ok.
 
 % ----------------------------------------------------------------------------------------------------------
 % Function: init_per_testcase(TestCase, Config0) ->
@@ -185,3 +198,39 @@ batch(_Config) ->
         {S2, [1972]},
         {S2, [1978]}
     ]).
+
+squery_no_wait(_Config) ->
+    %% block only available worker
+    spawn(fun() -> pgpool:squery(pgpool_test, "select pg_sleep(1);") end),
+    timer:sleep(200),
+    %% return immediately
+    {error, no_available_connections} = pgpool:squery(
+        pgpool_test,
+        "INSERT INTO films (name, year) VALUES ('First Movie', 1972);",
+        [no_wait]
+    ).
+
+equery_no_wait(_Config) ->
+    %% block only available worker
+    spawn(fun() -> pgpool:squery(pgpool_test, "select pg_sleep(1);") end),
+    timer:sleep(200),
+    %% return immediately
+    {error, no_available_connections} = pgpool:equery(
+        pgpool_test,
+        "INSERT INTO films (name, year) VALUES ($1, $2);", ["First Movie", 1972],
+        [no_wait]
+    ).
+
+batch_no_wait(_Config) ->
+    %% block only available worker
+    spawn(fun() -> pgpool:squery(pgpool_test, "select pg_sleep(1);") end),
+    timer:sleep(200),
+    %% return immediately
+    S1 = "INSERT INTO films (name, year) VALUES ($1, $2);",
+    {error, no_available_connections} = pgpool:batch(
+        pgpool_test, [
+            {S1, ["First Movie", 1972]},
+            {S1, ["Second Movie", 1978]}
+        ],
+        [no_wait]
+    ).

@@ -275,7 +275,9 @@ prepare_or_get_statement(Statement, #state{
 
 -spec transaction(
     DatabaseName :: atom(),
-    Message :: {squery, Sql :: string() | iodata()} | {equery, Statement :: string(), Params :: list()},
+    Message :: {squery, Sql :: string() | iodata()}
+    | {equery, Statement :: string(), Params :: list()}
+    | {batch, [{Statement :: string(), Params :: list()}]},
     Options :: []
 ) -> any() | {error, no_available_connections}.
 transaction(DatabaseName, Message, Options) ->

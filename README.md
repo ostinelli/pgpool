@@ -1,11 +1,9 @@
+
 [![Build Status](https://travis-ci.org/ostinelli/pgpool.svg?branch=master)](https://travis-ci.org/ostinelli/pgpool)
 [![Hex pm](https://img.shields.io/hexpm/v/pgpool.svg)](https://hex.pm/packages/pgpool)
 
 # PGPool
-
-PGPool is a PosgreSQL client that automatically uses connection pools and handles reconnections in case of errors.
-
-PGPool also optimizes all of your statements, by preparing them and caching them for you under the hood.
+PGPool is a PosgreSQL client that automatically uses connection pools and handles reconnections in case of errors.  PGPool also optimizes all of your statements, by preparing them and caching them for you under the hood.
 
 It uses:
 
@@ -14,47 +12,72 @@ It uses:
 
 
 ## Install
+
+### For Elixir
+Add it to your deps:
+
+```elixir
+defp deps do
+  [{:pgpool, "~> 2.1"}]
+end
+```
+
+Ensure that `pgpool` is started with your application, for example by adding it to the list of your application's `extra_applications`:
+
+```elixir
+def application do
+  [
+    extra_applications: [:logger, :pgpool]
+  ]
+end
+```
+
+### For Erlang
 If you're using [rebar3](https://github.com/erlang/rebar3), add `pgpool` as a dependency in your project's `rebar.config` file:
 
 ```erlang
-{pgpool, {git, "git://github.com/ostinelli/pgpool.git", {tag, "1.1.1"}}}
+{pgpool, {git, "git://github.com/ostinelli/pgpool.git", {tag, "2.1.0"}}}
 ```
 
 Or, if you're using [Hex.pm](https://hex.pm/) as package manager (with the [rebar3_hex](https://github.com/hexpm/rebar3_hex) plugin):
 
 ```erlang
-{pgpool, "2.0.1"}
+{pgpool, "2.1.0"}
 ```
 
-Then, compile:
+Ensure that `pgpool` is started with your application, for example by adding it in your `.app` file to the list of `applications`:
 
-```bash
-$ rebar3 compile
+```erlang
+{application, my_app, [
+    %% ...
+    {applications, [
+        kernel,
+        stdlib,
+        sasl,
+        pgpool,
+        %% ...
+    ]},
+    %% ...
+]}.
 ```
 
 ## Usage
+Since `pgpool` is written in Erlang, the example code here below is in Erlang. Thanks to Elixir interoperability, the equivalent code in Elixir is straightforward.
 
-### Setup
-Ensure to start PGPool from your application. This can be done by either providing it as a dependency in your `.app` file, or by starting it manually:
-
-```erlang
-pgpool:start().
-```
 
 ### Specify Databases
 Databases can be set in the environment variable `pgpool`. You're probably best off using an application configuration file (in releases, `sys.config`):
 
 ```erlang
-
 {pgpool, [
   {databases, [
     {db1_name, [
       {pool, [
         %% poolboy options <https://github.com/devinus/poolboy>
         %% The `name` and `worker_module` options here will be ignored.
-        {size, 10},         %% maximum pool size
-        {max_overflow, 20}, %% maximum number of workers created if pool is empty
-        {strategy, lifo}    %% can be lifo or fifo (default is lifo)
+        {size, 10},        %% maximum pool size
+        {max_overflow, 5}, %% maximum number of additional workers created if pool is empty
+        {strategy, lifo}   %% can be lifo or fifo (default is lifo)
       ]},
       {connection, [
         {host, "localhost"},
@@ -90,20 +113,33 @@ Databases can be set in the environment variable `pgpool`. You're probably best 
 ]}
 ```
 
+### Custom types
+
+```erlang
+-type pgpool_query_option() :: no_wait.
+```
+
 ### Queries
-Please refer to [epgsql README](https://github.com/epgsql/epgsql) for how to perform queries. Currently, PGPool supports the following.
+Please refer to [epgsql 3.4 README](https://github.com/epgsql/epgsql/blob/3.4.0/README.md) for how to perform queries. Currently, PGPool supports the following.
 
 #### Simple Query
 
 ```erlang
-pgpool:squery(DatabaseName, Sql) -> Result
+pgpool:squery(DatabaseName, Sql) ->
+  pgpool:squery(DatabaseName, Sql, []).
+```
+
+```erlang
+pgpool:squery(DatabaseName, Sql) ->
+  Result
 
 Types:
   DatabaseName = atom()
   Sql = string() | iodata()
-  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection}
-    Count =  non_neg_integer()
-    Rows = (see epgsql for more details)
+  Options = [pgpool_query_option()]
+  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
+  Count =  non_neg_integer()
+  Rows = (see epgsql for more details)
 ```
 
 For example:
@@ -117,15 +153,22 @@ pgpool:squery(db1_name, "SELECT * FROM users;").
 #### Extended Query
 
 ```erlang
-pgpool:equery(DatabaseName, Statement, Params) -> Result
+pgpool:equery(DatabaseName, Statement, Params) ->
+  pgpool:equery(DatabaseName, Statement, Params, []).
+```
+
+```erlang
+pgpool:equery(DatabaseName, Statement, Params, Options) ->
+  Result
 
 Types:
   DatabaseName = atom()
   Statement = string()
   Params = list()
-  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection}
-    Count = non_neg_integer()
-    Rows = (see epgsql for more details)
+  Options = [pgpool_query_option()]
+  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
+  Count =  non_neg_integer()
+  Rows = (see epgsql for more details)
 ```
 
 For example:
@@ -140,16 +183,23 @@ pgpool:equery(db1_name, "SELECT * FROM users WHERE id = $1;", [3]).
 To execute a batch:
 
 ```erlang
-pgpool:batch(DatabaseName, StatementsWithParams) -> Result
+pgpool:batch(DatabaseName, StatementsWithParams) ->
+  pgpool:batch(DatabaseName, StatementsWithParams, Options).
+```
+
+```erlang
+pgpool:batch(DatabaseName, StatementsWithParams) ->
+  Result
 
 Types:
   DatabaseName = atom()
   StatementsWithParams = [{Statement, Params}]
   Statement = string()
   Params = list()
-  Result =  [{ok, Count} | {ok, Count, Rows}].
-    Count =  non_neg_integer()
-    Rows = (see epgsql for more details)
+  Options = [pgpool_query_option()]
+  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
+  Count =  non_neg_integer()
+  Rows = (see epgsql for more details)
 ```
 
 For example:
@@ -158,8 +208,8 @@ For example:
 S = "INSERT INTO users (name) VALUES ($1);",
 
 [{ok, 1}, {ok, 1}] = pgpool:batch(db1_name, [
-    {S, ["Hedy"]},
-    {S, ["Roberto"]}
+  {S, ["Hedy"]},
+  {S, ["Roberto"]}
 ]).
 ```
 
@@ -176,5 +226,5 @@ Do not commit to master in your fork. Provide a clean branch without merge commi
 Ensure that proper testing is included. To run PGPool tests, you need to create the database `pgpool_test` for user `postgres` with no password, and then simply run from the project's root directory:
 
 ```
-$ make tests
+$ make test
 ```

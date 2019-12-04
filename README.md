@@ -119,6 +119,8 @@ Databases can be set in the environment variable `pgpool`. You're probably best 
 -type pgpool_query_option() :: no_wait.
 ```
 
+`no_wait` makes the query call return immediately if there are no available connections in the pool. This allows you to improve your application's flow control by rejecting external calls if your database is unable to handle the load, thus preventing a system overflow.
+
 ### Queries
 Please refer to [epgsql 3.4 README](https://github.com/epgsql/epgsql/blob/3.4.0/README.md) for how to perform queries. Currently, PGPool supports the following.
 
@@ -137,8 +139,8 @@ Types:
   DatabaseName = atom()
   Sql = string() | iodata()
   Options = [pgpool_query_option()]
-  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
-  Count =  non_neg_integer()
+  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
+  Count = non_neg_integer()
   Rows = (see epgsql for more details)
 ```
 
@@ -166,8 +168,8 @@ Types:
   Statement = string()
   Params = list()
   Options = [pgpool_query_option()]
-  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
-  Count =  non_neg_integer()
+  Result = {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
+  Count = non_neg_integer()
   Rows = (see epgsql for more details)
 ```
 
@@ -197,8 +199,8 @@ Types:
   Statement = string()
   Params = list()
   Options = [pgpool_query_option()]
-  Result =  {ok, Count} | {ok, Count, Rows} | {error, no_connection | no_available_connections}
-  Count =  non_neg_integer()
+  Result = [{ok, Count} | {ok, Count, Rows}] | {error, no_connection | no_available_connections}
+  Count = non_neg_integer()
   Rows = (see epgsql for more details)
 ```
 

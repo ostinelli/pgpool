@@ -31,6 +31,9 @@
 -export([equery/3, equery/4]).
 -export([batch/2, batch/3]).
 
+%% includes
+-include("pgpool.hrl").
+
 %% ===================================================================
 %% API
 %% ===================================================================
@@ -52,7 +55,7 @@ stop() ->
 squery(DatabaseName, Sql) ->
     pgpool_worker:squery(DatabaseName, Sql).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), Options :: []) ->
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), Options :: [pgpool_query_option()]) ->
     any() | {error, no_available_connections}.
 squery(DatabaseName, Sql, Options) ->
     pgpool_worker:squery(DatabaseName, Sql, Options).
@@ -61,7 +64,7 @@ squery(DatabaseName, Sql, Options) ->
 equery(DatabaseName, Statement, Params) ->
     pgpool_worker:equery(DatabaseName, Statement, Params).
 
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), Options :: []) ->
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), Options :: [pgpool_query_option()]) ->
     any() | {error, no_available_connections}.
 equery(DatabaseName, Statement, Params, Options) ->
     pgpool_worker:equery(DatabaseName, Statement, Params, Options).
@@ -71,7 +74,7 @@ equery(DatabaseName, Statement, Params, Options) ->
 batch(DatabaseName, StatementsWithParams) ->
     pgpool_worker:batch(DatabaseName, StatementsWithParams).
 
--spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}], Options :: []) ->
+-spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}], Options :: [pgpool_query_option()]) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}] | {error, no_available_connections}.
 batch(DatabaseName, StatementsWithParams, Options) ->
     pgpool_worker:batch(DatabaseName, StatementsWithParams, Options).

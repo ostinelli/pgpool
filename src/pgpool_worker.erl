@@ -52,6 +52,9 @@
 -define(RECONNECT_TIMEOUT_MS, 5000).
 -define(RETRY_SLEEP_MS, 1000).
 
+%% includes
+-include("pgpool.hrl").
+
 %% ===================================================================
 %% API
 %% ===================================================================
@@ -63,7 +66,7 @@ start_link(Args) ->
 squery(DatabaseName, Sql) ->
     squery(DatabaseName, Sql, []).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), Options :: []) ->
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), Options :: [pgpool_query_option()]) ->
     any() | {error, no_available_connections}.
 squery(DatabaseName, Sql, Options) ->
     transaction(DatabaseName, {squery, Sql}, Options).
@@ -72,7 +75,7 @@ squery(DatabaseName, Sql, Options) ->
 equery(DatabaseName, Statement, Params) ->
     equery(DatabaseName, Statement, Params, []).
 
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), Options :: []) ->
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), Options :: [pgpool_query_option()]) ->
     any() | {error, no_available_connections}.
 equery(DatabaseName, Statement, Params, Options) ->
     transaction(DatabaseName, {equery, Statement, Params}, Options).
@@ -82,7 +85,7 @@ equery(DatabaseName, Statement, Params, Options) ->
 batch(DatabaseName, StatementsWithParams) ->
     batch(DatabaseName, StatementsWithParams, []).
 
--spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}], Options :: []) ->
+-spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}], Options :: [pgpool_query_option()]) ->
     [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}] | {error, no_available_connections}.
 batch(DatabaseName, StatementsWithParams, Options) ->
     transaction(DatabaseName, {batch, StatementsWithParams}, Options).
@@ -278,7 +281,7 @@ prepare_or_get_statement(Statement, #state{
     Message :: {squery, Sql :: string() | iodata()}
     | {equery, Statement :: string(), Params :: list()}
     | {batch, [{Statement :: string(), Params :: list()}]},
-    Options :: []
+    Options :: [pgpool_query_option()]
 ) -> any() | {error, no_available_connections}.
 transaction(DatabaseName, Message, Options) ->
     Block = not lists:member(no_wait, Options),

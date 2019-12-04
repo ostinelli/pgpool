@@ -208,7 +208,10 @@ squery_no_wait(_Config) ->
         pgpool_test,
         "INSERT INTO films (name, year) VALUES ('First Movie', 1972);",
         [no_wait]
-    ).
+    ),
+    %% wait for connection to be available
+    timer:sleep(1000),
+    {ok, 1} = pgpool:squery(pgpool_test, "INSERT INTO films (name, year) VALUES ('First Movie', 1972);").
 
 equery_no_wait(_Config) ->
     %% block only available worker
@@ -219,7 +222,10 @@ equery_no_wait(_Config) ->
         pgpool_test,
         "INSERT INTO films (name, year) VALUES ($1, $2);", ["First Movie", 1972],
         [no_wait]
-    ).
+    ),
+    %% wait for connection to be available
+    timer:sleep(1000),
+    {ok, 1} = pgpool:equery(pgpool_test, "INSERT INTO films (name, year) VALUES ($1, $2);", ["First Movie", 1972]).
 
 batch_no_wait(_Config) ->
     %% block only available worker
@@ -233,4 +239,10 @@ batch_no_wait(_Config) ->
             {S1, ["Second Movie", 1978]}
         ],
         [no_wait]
-    ).
+    ),
+    %% wait for connection to be available
+    timer:sleep(1000),
+    [{ok, 1}, {ok, 1}] = pgpool:batch(pgpool_test, [
+        {S1, ["First Movie", 1972]},
+        {S1, ["Second Movie", 1978]}
+    ]).

@@ -62,31 +62,43 @@
 start_link(Args) ->
     gen_server:start_link(?MODULE, Args, []).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) -> any().
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) ->
+    {ok, Count :: non_neg_integer()}
+    | {ok, Count :: non_neg_integer(), Rows :: any()}
+    | {error, no_connection | no_available_connections}.
 squery(DatabaseName, Sql) ->
     squery(DatabaseName, Sql, []).
 
 -spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), Options :: [pgpool_query_option()]) ->
-    any() | {error, no_available_connections}.
+    {ok, Count :: non_neg_integer()}
+    | {ok, Count :: non_neg_integer(), Rows :: any()}
+    | {error, no_connection | no_available_connections}.
 squery(DatabaseName, Sql, Options) ->
     transaction(DatabaseName, {squery, Sql}, Options).
 
--spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) -> any().
+-spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list()) ->
+    {ok, Count :: non_neg_integer()}
+    | {ok, Count :: non_neg_integer(), Rows :: any()}
+    | {error, no_connection | no_available_connections}.
 equery(DatabaseName, Statement, Params) ->
     equery(DatabaseName, Statement, Params, []).
 
 -spec equery(DatabaseName :: atom(), Statement :: string(), Params :: list(), Options :: [pgpool_query_option()]) ->
-    any() | {error, no_available_connections}.
+    {ok, Count :: non_neg_integer()}
+    | {ok, Count :: non_neg_integer(), Rows :: any()}
+    | {error, no_connection | no_available_connections}.
 equery(DatabaseName, Statement, Params, Options) ->
     transaction(DatabaseName, {equery, Statement, Params}, Options).
 
 -spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}]) ->
-    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}].
+    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}]
+    | {error, no_connection | no_available_connections}.
 batch(DatabaseName, StatementsWithParams) ->
     batch(DatabaseName, StatementsWithParams, []).
 
 -spec batch(DatabaseName :: atom(), [{Statement :: string(), Params :: list()}], Options :: [pgpool_query_option()]) ->
-    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}] | {error, no_available_connections}.
+    [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}]
+    | {error, no_connection | no_available_connections}.
 batch(DatabaseName, StatementsWithParams, Options) ->
     transaction(DatabaseName, {batch, StatementsWithParams}, Options).
 
@@ -282,7 +294,11 @@ prepare_or_get_statement(Statement, #state{
     | {equery, Statement :: string(), Params :: list()}
     | {batch, [{Statement :: string(), Params :: list()}]},
     Options :: [pgpool_query_option()]
-) -> any() | {error, no_available_connections}.
+) ->
+    {ok, Count :: non_neg_integer()}
+    | {ok, Count :: non_neg_integer(), Rows :: any()}
+    | [{ok, Count :: non_neg_integer()} | {ok, Count :: non_neg_integer(), Rows :: any()}]
+    | {error, no_connection | no_available_connections}.
 transaction(DatabaseName, Message, Options) ->
     Block = not lists:member(no_wait, Options),
     case poolboy:checkout(DatabaseName, Block) of

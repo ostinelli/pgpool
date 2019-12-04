@@ -51,12 +51,17 @@ start() ->
 stop() ->
     ok = application:stop(pgpool).
 
--spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) -> any().
+-spec squery(DatabaseName :: atom(), Sql :: string() | iodata()) ->
+    {ok, Count :: non_neg_integer()}
+    | {ok, Count :: non_neg_integer(), Rows :: any()}
+    | {error, no_connection | no_available_connections}.
 squery(DatabaseName, Sql) ->
     pgpool_worker:squery(DatabaseName, Sql).
 
 -spec squery(DatabaseName :: atom(), Sql :: string() | iodata(), Options :: [pgpool_query_option()]) ->
-    any() | {error, no_available_connections}.
+    {ok, Count :: non_neg_integer()}
+    | {ok, Count :: non_neg_integer(), Rows :: any()}
+    | {error, no_connection | no_available_connections}.
 squery(DatabaseName, Sql, Options) ->
     pgpool_worker:squery(DatabaseName, Sql, Options).
 

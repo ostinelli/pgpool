@@ -45,6 +45,8 @@ start_link() ->
 -spec init([]) ->
     {ok, {{supervisor:strategy(), non_neg_integer(), pos_integer()}, [supervisor:child_spec()]}}.
 init([]) ->
+    %% maybe substitute file:// password references with their value
+    maybe_dereference_password(),
     %% get databases
     Children = case application:get_env(databases) of
         {ok, Databases} ->
@@ -82,3 +84,32 @@ children_spec([{DatabaseName, DatabaseInfo} | T], Specs) ->
 remove_list_elements([], L) -> L;
 remove_list_elements([El|T], L) ->
     remove_list_elements(T, lists:keydelete(El, 1, L)).
+
+
+%% Maybe read DB passwords from files.  If {pass, Value} has a Value
+%% that matches "file://" (e.g., "file:///var/run/secrets/password"),
+%% substitue the text of the file /var/run/secrets/password for Value.
+maybe_dereference_password() ->
+    case application:get_env(databases) of
+        {ok, DBs} ->
+            NewDBs = [ dereference_password(DB) || DB <- DBs ],
+            application:set_env(pgpool, databases, NewDBs);
+        [] ->
+            ok
+    end.
+
+dereference_password(DB) ->
+    {Name, DBPlist} = DB,
+    Connection = proplists:get_value(connection, DBPlist),
+    {pass, ExistingPass} = lists:keyfind(pass, 1, Connection),
+    NewPass = replace_password(ExistingPass),
+    NewConnection = lists:keyreplace(pass, 1, Connection, {pass, NewPass}),
+    NewDBPlist = lists:keyreplace(connection, 1, DBPlist,
+                                  {connection, NewConnection}),
+    {Name, NewDBPlist}.
+
+replace_password("file://" ++ PasswordFile) ->
+    {ok, NewPassword} = file:read_file(PasswordFile),
+    string:trim(binary_to_list(NewPassword));
+replace_password(ExistingPassword) ->
+    ExistingPassword.
